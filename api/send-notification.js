@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       contents: { en: message }
     };
 
-    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+    const response = await fetch("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
