@@ -1,7 +1,7 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const ONESIGNAL_APP_ID = "527dee17-feec-4ffb-bfd6-6d3bb72ed984";
-const ONESIGNAL_REST_API_KEY = "os_v2_app_kj664f765rh7xp6wnu53olwzqte62ga5k2au4cmmedwzuthhrn2dtslmz5xgpza725b4pezbgnxkssdvlbmsdmuth4iqyn2xbeqbfzq";
+const ONESIGNAL_APP_ID = "ca7ff1e7-35c9-473f-8042-00f5141bcef1";
+const ONESIGNAL_REST_API_KEY = "os_v2_app_zj77dzzvzfdt7accad2rig6o6hq3p57lnkfewbvpxcsfyczar6dshuwhv6bx64bewye5mtjfr3vre2u2ipevfjw4rupoe5bkatb5ifa";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
