@@ -1,80 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Notification Sender</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f2f2f2;
-      padding: 60px;
-      text-align: center;
-    }
-    input {
-      padding: 10px;
-      width: 300px;
-    }
-    button {
-      padding: 10px 20px;
-      margin-left: 10px;
-      cursor: pointer;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-  </style>
-
-  <!-- OneSignal SDK -->
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
-  <script>
-    window.OneSignal = window.OneSignal || [];
-    OneSignal.push(function () {
-      OneSignal.init({
-        appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984", // আপনার App ID
-        notifyButton: { enable: true },               // ফ্লোটিং সাবস্ক্রাইব বাটন
-        serviceWorkerPath: "/",                       // Worker ফাইল root এ
-      });
-
-      // Auto permission popup on load
-      OneSignal.showSlidedownPrompt();
+<meta charset="UTF-8" />
+<title>OneSignal Test</title>
+<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+<script>
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.init({
+      appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
+      notifyButton: { enable: true },
+      serviceWorkerPath: "/",
+      allowLocalhostAsSecureOrigin: true
     });
-  </script>
+    OneSignal.showSlidedownPrompt();
+  });
+</script>
 </head>
 <body>
-  <h2>🔔 Send Push Notification</h2>
-  <input id="messageInput" placeholder="Write your message here..." />
-  <button onclick="sendNotification()">Send</button>
-
-  <script>
-    function sendNotification() {
-      const msg = document.getElementById("messageInput").value.trim();
-      if (!msg) return alert("⚠️ Please enter a message.");
-
-      fetch("https://onesignal.com/api/v1/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Basic os_v2_app_kj664f765rh7xp6wnu53olwzqs6n7jcxyageiuuql6cb6kte7doktddbri33ulbdhtqrnszmaiewhuuwjwcgiwiktpqn3cghnnmxydq"
-        },
-        body: JSON.stringify({
-          app_id: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
-          included_segments: ["Subscribed Users"], // 🔥 No player ID needed
-          contents: { en: msg }
-        })
+<h1>OneSignal Push Test</h1>
+<button onclick="sendTest()">Send Test Notification</button>
+<script>
+  async function sendTest() {
+    const playerId = await OneSignal.getUserId();
+    if (!playerId) return alert("Not subscribed yet!");
+    fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Basic os_v2_app_kj664f765rh7xp6wnu53olwzqs6n7jcxyageiuuql6cb6kte7doktddbri33ulbdhtqrnszmaiewhuuwjwcgiwiktpqn3cghnnmxydq"
+      },
+      body: JSON.stringify({
+        app_id: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
+        include_player_ids: [playerId],
+        contents: { en: "This is a test notification" }
       })
-      .then(res => res.json())
-      .then(data => {
-        console.log("✅ Notification sent:", data);
-        alert("✅ Notification sent successfully!");
-        document.getElementById("messageInput").value = "";
-      })
-      .catch(err => {
-        console.error("❌ Error sending notification:", err);
-        alert("❌ Failed to send notification.");
-      });
-    }
-  </script>
+    }).then(res => res.json())
+    .then(data => alert("Notification sent!"))
+    .catch(err => alert("Failed to send"));
+  }
+</script>
 </body>
 </html>
