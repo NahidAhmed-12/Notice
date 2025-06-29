@@ -1,44 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>OneSignal Test</title>
-<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
-<script>
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.init({
-      appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
-      notifyButton: { enable: true },
-      serviceWorkerPath: "/",
-      allowLocalhostAsSecureOrigin: true
+  <meta charset="UTF-8" />
+  <title>Simple Notification Sender</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 50px;
+      text-align: center;
+      background: #f0f0f0;
+    }
+    input {
+      width: 300px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+  <script>
+    window.OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+      OneSignal.init({
+        appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
+        notifyButton: { enable: true },
+        serviceWorkerPath: "/",
+      });
+      OneSignal.showSlidedownPrompt();
     });
-    OneSignal.showSlidedownPrompt();
-  });
-</script>
+  </script>
 </head>
 <body>
-<h1>OneSignal Push Test</h1>
-<button onclick="sendTest()">Send Test Notification</button>
-<script>
-  async function sendTest() {
-    const playerId = await OneSignal.getUserId();
-    if (!playerId) return alert("Not subscribed yet!");
-    fetch("https://onesignal.com/api/v1/notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Basic os_v2_app_kj664f765rh7xp6wnu53olwzqs6n7jcxyageiuuql6cb6kte7doktddbri33ulbdhtqrnszmaiewhuuwjwcgiwiktpqn3cghnnmxydq"
-      },
-      body: JSON.stringify({
-        app_id: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
-        include_player_ids: [playerId],
-        contents: { en: "This is a test notification" }
+  <h2>Send Notification</h2>
+  <input type="text" id="msg" placeholder="Type your message here" />
+  <button onclick="sendNotification()">Send</button>
+
+  <script>
+    function sendNotification() {
+      const message = document.getElementById("msg").value.trim();
+      if (!message) {
+        alert("Please type a message!");
+        return;
+      }
+
+      fetch("https://onesignal.com/api/v1/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Basic os_v2_app_kj664f765rh7xp6wnu53olwzqs6n7jcxyageiuuql6cb6kte7doktddbri33ulbdhtqrnszmaiewhuuwjwcgiwiktpqn3cghnnmxydq"
+        },
+        body: JSON.stringify({
+          app_id: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
+          included_segments: ["Subscribed Users"],
+          contents: { en: message }
+        })
       })
-    }).then(res => res.json())
-    .then(data => alert("Notification sent!"))
-    .catch(err => alert("Failed to send"));
-  }
-</script>
+      .then(res => res.json())
+      .then(data => {
+        alert("Notification sent!");
+        document.getElementById("msg").value = "";
+      })
+      .catch(() => alert("Failed to send notification."));
+    }
+  </script>
 </body>
 </html>
