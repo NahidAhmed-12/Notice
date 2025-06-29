@@ -2,10 +2,10 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <title>Send Push Notification (v16)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OneSignal Notification Sender (v16)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- ✅ OneSignal SDK (v16) -->
+  <!-- OneSignal SDK v16 -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -16,81 +16,95 @@
         allowLocalhostAsSecureOrigin: true
       });
 
-      // ✅ Check permission
       const permission = await OneSignal.Notifications.permission;
-      console.log("🔔 Permission:", permission);
+      console.log("Notification permission:", permission);
 
-      // ✅ Ask for permission if not granted
       if (permission !== "granted") {
         await OneSignal.Notifications.requestPermission();
       }
 
-      // ✅ Get and store Player ID
-      const userId = await OneSignal.User.getId();
-      console.log("✅ Player ID:", userId);
-      localStorage.setItem("playerId", userId);
+      const user = await OneSignal.User.get();
+      const playerId = user.id;
+      console.log("Player ID:", playerId);
+      localStorage.setItem("playerId", playerId);
     });
   </script>
 
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; background: #f4f4f4; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      padding: 30px;
+    }
     .container {
-      max-width: 500px;
+      max-width: 480px;
       margin: auto;
       background: white;
-      padding: 20px;
       border-radius: 8px;
+      padding: 20px;
       box-shadow: 0 0 10px #ccc;
     }
     input, textarea {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-bottom: 15px;
-      border-radius: 4px;
+      border-radius: 5px;
       border: 1px solid #ccc;
+      font-size: 16px;
     }
     button {
       width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      background: #007bff;
+      padding: 14px;
+      background-color: #007bff;
       color: white;
+      font-size: 18px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
+    }
+    button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
     }
     #response {
       margin-top: 15px;
       padding: 12px;
       display: none;
-      border-radius: 5px;
+      border-radius: 6px;
+      font-weight: bold;
     }
-    .success { background: #d4edda; color: #155724; }
-    .error { background: #f8d7da; color: #721c24; }
+    #response.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    #response.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>📢 Send Notification to All Subscribers</h2>
+    <h2>OneSignal Notification Sender</h2>
     <input type="text" id="title" placeholder="Notification Title" />
     <textarea id="message" placeholder="Notification Message"></textarea>
-    <button id="sendBtn">Send Notification</button>
+    <button id="sendBtn">Send Notification to All</button>
     <div id="response"></div>
   </div>
 
   <script>
-    const sendBtn = document.getElementById("sendBtn");
-    const response = document.getElementById("response");
-
     const REST_API_KEY = "os_v2_app_zj77dzzvzfdt7accad2rig6o6hq3p57lnkfewbvpxcsfyczar6dshuwhv6bx64bewye5mtjfr3vre2u2ipevfjw4rupoe5bkatb5ifa";
     const APP_ID = "ca7ff1e7-35c9-473f-8042-00f5141bcef1";
+
+    const sendBtn = document.getElementById("sendBtn");
+    const responseDiv = document.getElementById("response");
 
     sendBtn.addEventListener("click", async () => {
       const title = document.getElementById("title").value.trim();
       const message = document.getElementById("message").value.trim();
 
       if (!title || !message) {
-        alert("Please fill in both title and message.");
+        alert("দয়া করে Title এবং Message উভয়ই লিখুন");
         return;
       }
 
@@ -98,11 +112,11 @@
         app_id: APP_ID,
         headings: { en: title },
         contents: { en: message },
-        included_segments: ["Subscribed Users"] // ✅ সবার কাছে যাবে
+        included_segments: ["Subscribed Users"]  // সবাই পাবেন যারা subscribe করেছেন
       };
 
       sendBtn.disabled = true;
-      response.style.display = "none";
+      responseDiv.style.display = "none";
 
       try {
         const res = await fetch("https://onesignal.com/api/v1/notifications", {
@@ -117,18 +131,17 @@
         const data = await res.json();
 
         if (res.ok) {
-          response.className = "success";
-          response.textContent = "✅ Notification sent to all! ID: " + data.id;
+          responseDiv.className = "success";
+          responseDiv.textContent = "✅ Notification পাঠানো হয়েছে! ID: " + data.id;
         } else {
-          console.error(data);
-          response.className = "error";
-          response.textContent = "❌ Error: " + (data.errors || JSON.stringify(data));
+          responseDiv.className = "error";
+          responseDiv.textContent = "❌ Error: " + (data.errors || JSON.stringify(data));
         }
       } catch (err) {
-        response.className = "error";
-        response.textContent = "❌ Network error: " + err.message;
+        responseDiv.className = "error";
+        responseDiv.textContent = "❌ Network error: " + err.message;
       } finally {
-        response.style.display = "block";
+        responseDiv.style.display = "block";
         sendBtn.disabled = false;
       }
     });
