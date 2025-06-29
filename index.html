@@ -2,10 +2,10 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <title>Send To All - OneSignal</title>
+  <title>Send Push Notification (v16)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- SDK -->
+  <!-- ✅ OneSignal SDK (v16) -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -16,29 +16,65 @@
         allowLocalhostAsSecureOrigin: true
       });
 
-      const permission = await OneSignal.getNotificationPermission();
-      if (permission !== 'granted') {
-        await OneSignal.showSlidedownPrompt();
+      // ✅ Check permission
+      const permission = await OneSignal.Notifications.permission;
+      console.log("🔔 Permission:", permission);
+
+      // ✅ Ask for permission if not granted
+      if (permission !== "granted") {
+        await OneSignal.Notifications.requestPermission();
       }
+
+      // ✅ Get and store Player ID
+      const userId = await OneSignal.User.getId();
+      console.log("✅ Player ID:", userId);
+      localStorage.setItem("playerId", userId);
     });
   </script>
 
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
-    input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; }
-    button { width: 100%; padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; }
-    #response { margin-top: 15px; padding: 10px; display: none; border-radius: 5px; }
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f4f4f4; }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #response {
+      margin-top: 15px;
+      padding: 12px;
+      display: none;
+      border-radius: 5px;
+    }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Send Notification to Everyone</h2>
-    <input type="text" id="title" placeholder="Title" />
-    <textarea id="message" placeholder="Message"></textarea>
-    <button id="sendBtn">Send to All</button>
+    <h2>📢 Send Notification to All Subscribers</h2>
+    <input type="text" id="title" placeholder="Notification Title" />
+    <textarea id="message" placeholder="Notification Message"></textarea>
+    <button id="sendBtn">Send Notification</button>
     <div id="response"></div>
   </div>
 
@@ -54,7 +90,7 @@
       const message = document.getElementById("message").value.trim();
 
       if (!title || !message) {
-        alert("Title এবং Message পূরণ করুন");
+        alert("Please fill in both title and message.");
         return;
       }
 
@@ -62,7 +98,7 @@
         app_id: APP_ID,
         headings: { en: title },
         contents: { en: message },
-        included_segments: ["Subscribed Users"]
+        included_segments: ["Subscribed Users"] // ✅ সবার কাছে যাবে
       };
 
       sendBtn.disabled = true;
@@ -79,12 +115,12 @@
         });
 
         const data = await res.json();
-        response.style.display = "block";
 
         if (res.ok) {
           response.className = "success";
           response.textContent = "✅ Notification sent to all! ID: " + data.id;
         } else {
+          console.error(data);
           response.className = "error";
           response.textContent = "❌ Error: " + (data.errors || JSON.stringify(data));
         }
@@ -92,6 +128,7 @@
         response.className = "error";
         response.textContent = "❌ Network error: " + err.message;
       } finally {
+        response.style.display = "block";
         sendBtn.disabled = false;
       }
     });
