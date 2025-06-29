@@ -1,78 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-<meta charset="UTF-8" />
-<title>OneSignal Notifier</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f6f9; }
-    .container { text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 450px; }
-    h1 { color: #333; margin-bottom: 25px; }
-    .input-group { margin-bottom: 15px; }
-    input { width: 95%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; }
-    button { width: 100%; padding: 14px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 8px; transition: background-color 0.2s; }
-    button:hover { background: #0056b3; }
-    #status { margin-top: 20px; font-weight: bold; min-height: 22px; }
-</style>
-<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
-<script>
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.init({
-      appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
+  <meta charset="UTF-8" />
+  <title>OneSignal Notification Sender</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "ca7ff1e7-35c9-473f-8042-00f5141bcef1",
+        notifyButton: { enable: true },
+        allowLocalhostAsSecureOrigin: true // For local testing
+      });
+
+      const isPushSupported = await OneSignal.isPushNotificationsSupported();
+      if (isPushSupported) {
+        const permission = await OneSignal.getNotificationPermission();
+        if (permission !== 'granted') {
+          await OneSignal.showSlidedownPrompt();
+        }
+      }
     });
-  });
-</script>
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f1f1;
+      padding: 30px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #aaa;
+    }
+    .message {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
 </head>
 <body>
-
-<div class="container">
-    <h1>Send a Notification</h1>
-    <div class="input-group">
-        <input id="title" type="text" placeholder="Notification Title" />
+  <div class="container">
+    <h2>Send Notification</h2>
+    <div class="form-group">
+      <label for="title">Title:</label>
+      <input type="text" id="title" placeholder="Enter title here" />
     </div>
-    <div class="input-group">
-        <input id="msg" type="text" placeholder="Notification Message" />
+    <div class="form-group">
+      <label for="message">Message:</label>
+      <textarea id="message" rows="4" placeholder="Enter message here"></textarea>
     </div>
-    <button onclick="sendNotification()">Send to All Subscribers</button>
-    <p id="status"></p>
-</div>
+    <button id="sendBtn">Send Notification</button>
+    <div id="response" class="message"></div>
+  </div>
 
-<script>
-  async function sendNotification() {
-    const title = document.getElementById('title').value.trim();
-    const message = document.getElementById('msg').value.trim();
-    const statusEl = document.getElementById('status');
-    
-    if (!title || !message) {
-      statusEl.textContent = 'Please enter both title and message!';
-      statusEl.style.color = 'red';
-      return;
-    }
+  <script>
+    const sendBtn = document.getElementById("sendBtn");
+    const titleInput = document.getElementById("title");
+    const messageInput = document.getElementById("message");
+    const responseDiv = document.getElementById("response");
 
-    statusEl.textContent = 'Sending...';
-    statusEl.style.color = 'black';
+    const REST_API_KEY = "os_v2_app_zj77dzzvzfdt7accad2rig6o6hq3p57lnkfewbvpxcsfyczar6dshuwhv6bx64bewye5mtjfr3vre2u2ipevfjw4rupoe5bkatb5ifa";
+    const APP_ID = "ca7ff1e7-35c9-473f-8042-00f5141bcef1";
 
-    try {
-        const response = await fetch('/api/send-notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: title, message: message })
+    sendBtn.addEventListener("click", async () => {
+      const title = titleInput.value.trim();
+      const message = messageInput.value.trim();
+
+      if (!title || !message) {
+        alert("Please enter both title and message.");
+        return;
+      }
+
+      sendBtn.disabled = true;
+      responseDiv.style.display = "none";
+
+      const payload = {
+        app_id: APP_ID,
+        headings: { en: title },
+        contents: { en: message },
+        included_segments: ["Subscribed Users"]
+      };
+
+      try {
+        const res = await fetch("https://onesignal.com/api/v1/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic " + REST_API_KEY
+          },
+          body: JSON.stringify(payload)
         });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error[0] || 'Unknown error');
 
-        statusEl.textContent = 'Notification sent successfully!';
-        statusEl.style.color = 'green';
-        document.getElementById('title').value = '';
-        document.getElementById('msg').value = '';
+        const data = await res.json();
+        responseDiv.style.display = "block";
 
-    } catch (error) {
-        statusEl.textContent = `Error: ${error.message}`;
-        statusEl.style.color = 'red';
-    }
-  }
-</script>
-
+        if (res.ok) {
+          responseDiv.className = "message success";
+          responseDiv.textContent = "✅ Notification sent successfully! ID: " + data.id;
+        } else {
+          console.error(data);
+          responseDiv.className = "message error";
+          responseDiv.textContent = "❌ Error: " + (data.errors || JSON.stringify(data));
+        }
+      } catch (err) {
+        responseDiv.className = "message error";
+        responseDiv.textContent = "❌ Network error: " + err.message;
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
