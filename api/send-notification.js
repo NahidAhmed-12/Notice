@@ -9,18 +9,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, playerId } = req.body;
+    const { title, message } = req.body;
 
-    if (!message || !playerId) {
-      return res.status(400).json({ error: 'Message and Player ID are required.' });
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and message are required.' });
     }
 
     const notificationBody = {
       app_id: ONESIGNAL_APP_ID,
-      contents: { en: message },
-      headings: { en: "Direct Message" },
-      // এখানে আমরা সেগমেন্টের বদলে সরাসরি Player ID ব্যবহার করছি
-      include_player_ids: [playerId]
+      // আগের সিস্টেমে ফিরে আসা হলো
+      included_segments: ["Subscribed Users"],
+      headings: { en: title },
+      contents: { en: message }
     };
 
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
