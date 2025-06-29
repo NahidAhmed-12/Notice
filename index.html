@@ -1,74 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Simple Notification Sender</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 50px;
-      text-align: center;
-      background: #f0f0f0;
-    }
-    input {
-      width: 300px;
-      padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      padding: 10px 15px;
-      font-size: 16px;
-      margin-left: 10px;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>OneSignal Push Notification Sender</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 40px;
+    text-align: center;
+    background: #f9f9f9;
+  }
+  input[type="text"] {
+    width: 300px;
+    padding: 10px;
+    font-size: 16px;
+  }
+  button {
+    padding: 10px 18px;
+    font-size: 16px;
+    margin-left: 10px;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+</style>
 
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
-  <script>
-    window.OneSignal = window.OneSignal || [];
-    OneSignal.push(function() {
-      OneSignal.init({
-        appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
-        notifyButton: { enable: true },
-        serviceWorkerPath: "/",
-      });
-      OneSignal.showSlidedownPrompt();
+<!-- OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+<script>
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.init({
+      appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
+      notifyButton: { enable: true },
+      serviceWorkerPath: "/",
     });
-  </script>
+    OneSignal.showSlidedownPrompt(); // auto permission prompt
+  });
+</script>
 </head>
 <body>
-  <h2>Send Notification</h2>
-  <input type="text" id="msg" placeholder="Type your message here" />
-  <button onclick="sendNotification()">Send</button>
 
-  <script>
-    function sendNotification() {
-      const message = document.getElementById("msg").value.trim();
-      if (!message) {
-        alert("Please type a message!");
-        return;
-      }
+<h1>Send Push Notification</h1>
+<input id="msg" type="text" placeholder="Type your notification message here" />
+<button onclick="sendNotification()">Send</button>
 
-      fetch("https://onesignal.com/api/v1/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Basic os_v2_app_kj664f765rh7xp6wnu53olwzqs6n7jcxyageiuuql6cb6kte7doktddbri33ulbdhtqrnszmaiewhuuwjwcgiwiktpqn3cghnnmxydq"
-        },
-        body: JSON.stringify({
-          app_id: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
-          included_segments: ["Subscribed Users"],
-          contents: { en: message }
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert("Notification sent!");
-        document.getElementById("msg").value = "";
-      })
-      .catch(() => alert("Failed to send notification."));
+<script>
+  function sendNotification() {
+    const message = document.getElementById("msg").value.trim();
+    if (!message) {
+      alert("Please enter a message!");
+      return;
     }
-  </script>
+
+    fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Basic os_v2_app_kj664f765rh7xp6wnu53olwzqs6n7jcxyageiuuql6cb6kte7doktddbri33ulbdhtqrnszmaiewhuuwjwcgiwiktpqn3cghnnmxydq"
+      },
+      body: JSON.stringify({
+        app_id: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
+        included_segments: ["Subscribed Users"],
+        contents: { en: message }
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      alert("Notification sent successfully!");
+      document.getElementById("msg").value = "";
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Failed to send notification.");
+    });
+  }
+</script>
+
 </body>
 </html>
