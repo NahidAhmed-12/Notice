@@ -1,24 +1,27 @@
-// Vercel সার্ভারলেস ফাংশন
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-// আপনার App ID এবং REST API Key সরাসরি কোডে বসানো হয়েছে
-// সতর্কতা: এই পদ্ধতিটি অনিরাপদ এবং শুধুমাত্র টেস্টের জন্য ব্যবহার করুন।
 const ONESIGNAL_APP_ID = "527dee17-feec-4ffb-bfd6-6d3bb72ed984";
-const ONESIGNAL_REST_API_KEY = "os_v2_app_kj664f765rh7xp6wnu53olwzqs6n7jcxyageiuuql6cb6kte7donl2nnnge5eauvc34bpdtpbeerxio2mwzrs366yul4yfllpxxdcsy";
-
+const ONESIGNAL_REST_API_KEY = "os_v2_app_kj664f765rh7xp6wnu53olwzqte62ga5k2au4cmmedwzuthhrn2dtslmz5xgpza725b4pezbgnxkssdvlbmsdmuth4iqyn2xbeqbfzq";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).end(`Method Not Allowed`);
   }
 
   try {
-    const { message } = req.body;
+    const { message, playerId } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ error: 'Message cannot be empty.' });
+    if (!message || !playerId) {
+      return res.status(400).json({ error: 'Message and Player ID are required.' });
     }
+
+    const notificationBody = {
+      app_id: ONESIGNAL_APP_ID,
+      contents: { en: message },
+      headings: { en: "Direct Message" },
+      // এখানে আমরা সেগমেন্টের বদলে সরাসরি Player ID ব্যবহার করছি
+      include_player_ids: [playerId]
+    };
 
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
@@ -26,12 +29,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
         "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`
       },
-      body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        included_segments: ["Subscribed Users"],
-        contents: { en: message },
-        headings: { en: "New Message" }
-      })
+      body: JSON.stringify(notificationBody)
     });
 
     const data = await response.json();

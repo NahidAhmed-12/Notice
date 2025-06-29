@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>OneSignal Notification Sender</title>
+<title>OneSignal Direct Sender</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
-    .container { text-align: center; background: white; padding: 50px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-    h1 { color: #333; }
+    .container { text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+    #player-id-container { background: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 20px; word-wrap: break-word; }
     input { width: 320px; padding: 14px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; }
-    button { padding: 14px 22px; font-size: 16px; margin-left: 10px; cursor: pointer; background: linear-gradient(45deg, #007bff, #0056b3); color: white; border: none; border-radius: 8px; transition: transform 0.2s; }
-    button:hover { transform: scale(1.05); }
+    button { padding: 14px 22px; font-size: 16px; margin-left: 10px; cursor: pointer; background: linear-gradient(45deg, #007bff, #0056b3); color: white; border: none; border-radius: 8px; }
     #status { margin-top: 25px; font-weight: bold; min-height: 22px; }
 </style>
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
@@ -20,16 +19,28 @@
     OneSignal.init({
       appId: "527dee17-feec-4ffb-bfd6-6d3bb72ed984",
     });
+
+    // যখন সাবস্ক্রিপশন পরিবর্তন হবে, তখন Player ID দেখাবে
+    OneSignal.on('subscriptionChange', function(isSubscribed) {
+      if (isSubscribed) {
+        OneSignal.getUserId(function(userId) {
+          console.log("My Player ID:", userId);
+          document.getElementById('player-id').textContent = userId;
+        });
+      }
+    });
   });
 </script>
 </head>
 <body>
 
 <div class="container">
-    <h1>Send Web Push Notification</h1>
-    <p>Enter a message to send to all subscribed users.</p>
+    <h1>Direct Notification Sender</h1>
+    <div id="player-id-container">
+        <strong>Your Player ID:</strong> <span id="player-id">Subscribing...</span>
+    </div>
     <input id="msg" type="text" placeholder="Your notification message" />
-    <button onclick="sendNotification()">Send Notification</button>
+    <button onclick="sendNotification()">Send to My ID</button>
     <p id="status"></p>
 </div>
 
@@ -37,9 +48,16 @@
   async function sendNotification() {
     const message = document.getElementById('msg').value.trim();
     const statusEl = document.getElementById('status');
-    
+    const playerId = document.getElementById('player-id').textContent;
+
     if (!message) {
-      statusEl.textContent = 'Please write a message first!';
+      statusEl.textContent = 'Please write a message!';
+      statusEl.style.color = 'red';
+      return;
+    }
+    
+    if (!playerId || playerId === 'Subscribing...') {
+      statusEl.textContent = 'Player ID not found. Please subscribe first.';
       statusEl.style.color = 'red';
       return;
     }
@@ -48,26 +66,21 @@
     statusEl.style.color = 'black';
 
     try {
+        // এখন আমরা মেসেজের সাথে Player ID-ও পাঠাচ্ছি
         const response = await fetch('/api/send-notification', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message })
+            body: JSON.stringify({ message: message, playerId: playerId })
         });
-
         const result = await response.json();
+        if (!response.ok) throw new Error(result.error[0] || 'Unknown server error.');
 
-        if (response.ok && result.success) {
-            statusEl.textContent = 'Notification sent successfully!';
-            statusEl.style.color = 'green';
-            document.getElementById('msg').value = '';
-        } else {
-            throw new Error(result.error[0] || 'Unknown error occurred.');
-        }
+        statusEl.textContent = 'Notification sent directly to your ID!';
+        statusEl.style.color = 'green';
 
     } catch (error) {
         statusEl.textContent = `Error: ${error.message}`;
         statusEl.style.color = 'red';
-        console.error(error);
     }
   }
 </script>
