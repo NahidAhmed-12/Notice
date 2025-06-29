@@ -2,9 +2,10 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <title>OneSignal Notification Sender</title>
+  <title>Send To All - OneSignal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- OneSignal SDK -->
+
+  <!-- SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -12,114 +13,50 @@
       await OneSignal.init({
         appId: "ca7ff1e7-35c9-473f-8042-00f5141bcef1",
         notifyButton: { enable: true },
-        allowLocalhostAsSecureOrigin: true // For local testing
+        allowLocalhostAsSecureOrigin: true
       });
 
-      const isPushSupported = await OneSignal.isPushNotificationsSupported();
-      if (isPushSupported) {
-        const permission = await OneSignal.getNotificationPermission();
-        if (permission !== 'granted') {
-          await OneSignal.showSlidedownPrompt();
-        }
+      const permission = await OneSignal.getNotificationPermission();
+      if (permission !== 'granted') {
+        await OneSignal.showSlidedownPrompt();
       }
     });
   </script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f1f1f1;
-      padding: 30px;
-    }
-    h2 {
-      text-align: center;
-    }
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #ccc;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 5px;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      background: #28a745;
-      color: white;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 5px;
-      width: 100%;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: #aaa;
-    }
-    .message {
-      margin-top: 20px;
-      padding: 12px;
-      border-radius: 5px;
-      display: none;
-    }
-    .success {
-      background: #d4edda;
-      color: #155724;
-    }
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; }
+    button { width: 100%; padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; }
+    #response { margin-top: 15px; padding: 10px; display: none; border-radius: 5px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Send Notification</h2>
-    <div class="form-group">
-      <label for="title">Title:</label>
-      <input type="text" id="title" placeholder="Enter title here" />
-    </div>
-    <div class="form-group">
-      <label for="message">Message:</label>
-      <textarea id="message" rows="4" placeholder="Enter message here"></textarea>
-    </div>
-    <button id="sendBtn">Send Notification</button>
-    <div id="response" class="message"></div>
+    <h2>Send Notification to Everyone</h2>
+    <input type="text" id="title" placeholder="Title" />
+    <textarea id="message" placeholder="Message"></textarea>
+    <button id="sendBtn">Send to All</button>
+    <div id="response"></div>
   </div>
 
   <script>
     const sendBtn = document.getElementById("sendBtn");
-    const titleInput = document.getElementById("title");
-    const messageInput = document.getElementById("message");
-    const responseDiv = document.getElementById("response");
+    const response = document.getElementById("response");
 
     const REST_API_KEY = "os_v2_app_zj77dzzvzfdt7accad2rig6o6hq3p57lnkfewbvpxcsfyczar6dshuwhv6bx64bewye5mtjfr3vre2u2ipevfjw4rupoe5bkatb5ifa";
     const APP_ID = "ca7ff1e7-35c9-473f-8042-00f5141bcef1";
 
     sendBtn.addEventListener("click", async () => {
-      const title = titleInput.value.trim();
-      const message = messageInput.value.trim();
+      const title = document.getElementById("title").value.trim();
+      const message = document.getElementById("message").value.trim();
 
       if (!title || !message) {
-        alert("Please enter both title and message.");
+        alert("Title এবং Message পূরণ করুন");
         return;
       }
-
-      sendBtn.disabled = true;
-      responseDiv.style.display = "none";
 
       const payload = {
         app_id: APP_ID,
@@ -127,6 +64,9 @@
         contents: { en: message },
         included_segments: ["Subscribed Users"]
       };
+
+      sendBtn.disabled = true;
+      response.style.display = "none";
 
       try {
         const res = await fetch("https://onesignal.com/api/v1/notifications", {
@@ -139,19 +79,18 @@
         });
 
         const data = await res.json();
-        responseDiv.style.display = "block";
+        response.style.display = "block";
 
         if (res.ok) {
-          responseDiv.className = "message success";
-          responseDiv.textContent = "✅ Notification sent successfully! ID: " + data.id;
+          response.className = "success";
+          response.textContent = "✅ Notification sent to all! ID: " + data.id;
         } else {
-          console.error(data);
-          responseDiv.className = "message error";
-          responseDiv.textContent = "❌ Error: " + (data.errors || JSON.stringify(data));
+          response.className = "error";
+          response.textContent = "❌ Error: " + (data.errors || JSON.stringify(data));
         }
       } catch (err) {
-        responseDiv.className = "message error";
-        responseDiv.textContent = "❌ Network error: " + err.message;
+        response.className = "error";
+        response.textContent = "❌ Network error: " + err.message;
       } finally {
         sendBtn.disabled = false;
       }
